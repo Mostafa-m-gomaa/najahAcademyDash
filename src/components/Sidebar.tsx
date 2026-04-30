@@ -19,6 +19,7 @@ export default function Sidebar() {
           { label: 'Students', to: '/students' },
           { label: 'Courses', to: '/courses' },
           { label: 'Topics', to: '/topics' },
+          { label: 'Exams', to: '/exams' },
           { label: 'Essay questions', to: '/essay-questions' },
           { label: 'Essay answers', to: '/essay-answers' },
           { label: 'Notifications', to: '/notifications' },

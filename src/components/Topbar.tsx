@@ -9,6 +9,7 @@ const titles: Record<string, string> = {
   '/students': 'Students',
   '/courses': 'Courses',
   '/topics': 'Topics',
+  '/exams': 'Exams',
   '/essay-questions': 'Essay questions',
   '/essay-answers': 'Essay answers',
   '/notifications': 'Notifications',

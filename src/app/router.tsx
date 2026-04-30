@@ -16,6 +16,7 @@ import StudentCoursesPage from '../pages/essay/StudentCoursesPage'
 import StudentCourseEssayQuestionsPage from '../pages/essay/StudentCourseEssayQuestionsPage'
 import StudentEssayQuestionPage from '../pages/essay/StudentEssayQuestionPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
+import AdminExamsPage from '../pages/exams/AdminExamsPage'
 import NotFoundPage from '../pages/NotFoundPage'
 
 const router = createBrowserRouter([
@@ -37,6 +38,14 @@ const router = createBrowserRouter([
       { path: 'courses', element: <CoursesPage /> },
       { path: 'courses/:courseId', element: <CourseDetailsPage /> },
       { path: 'topics', element: <TopicsPage /> },
+      {
+        path: 'exams',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AdminExamsPage />
+          </RequireRole>
+        ),
+      },
       {
         path: 'essay-questions',
         element: (
