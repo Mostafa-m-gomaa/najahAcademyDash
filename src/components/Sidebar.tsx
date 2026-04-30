@@ -1,15 +1,29 @@
 import { NavLink } from 'react-router-dom'
 import LogoMark from './LogoMark'
-
-const navItems = [
-  { label: 'Overview', to: '/' },
-  { label: 'Users', to: '/users' },
-  { label: 'Students', to: '/students' },
-  { label: 'Courses', to: '/courses' },
-  { label: 'Topics', to: '/topics' },
-]
+import { useAuth } from '../features/auth/AuthProvider'
 
 export default function Sidebar() {
+  const { user } = useAuth()
+  const role = user?.role
+
+  const navItems =
+    role === 'student'
+      ? [
+          { label: 'Overview', to: '/' },
+          { label: 'My essay', to: '/learn/courses' },
+          { label: 'Notifications', to: '/notifications' },
+        ]
+      : [
+          { label: 'Overview', to: '/' },
+          { label: 'Users', to: '/users' },
+          { label: 'Students', to: '/students' },
+          { label: 'Courses', to: '/courses' },
+          { label: 'Topics', to: '/topics' },
+          { label: 'Essay questions', to: '/essay-questions' },
+          { label: 'Essay answers', to: '/essay-answers' },
+          { label: 'Notifications', to: '/notifications' },
+        ]
+
   return (
     <aside className="sidebar">
       <div className="brand">

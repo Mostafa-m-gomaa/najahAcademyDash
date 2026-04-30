@@ -79,13 +79,15 @@ export async function listCourses() {
   return { ...data, data: courses }
 }
 
-export async function getCourse(courseId: string) {
+export async function getCourse(
+  courseId: string,
+): Promise<ApiResponse<Course | undefined>> {
   const { data } = await api.get<ApiResponse<Course | { course?: Course }>>(
     `/courses/${courseId}`,
   )
   const payload = data.data
   const course = (payload as { course?: Course })?.course ?? payload ?? null
-  return { ...data, data: course ?? undefined }
+  return { ...data, data: course ?? undefined } as ApiResponse<Course | undefined>
 }
 
 export async function createCourse(payload: CoursePayload) {

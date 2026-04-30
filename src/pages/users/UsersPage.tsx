@@ -29,7 +29,7 @@ export default function UsersPage() {
     fullName: '',
     email: '',
     password: '',
-    role: 'admin' as Student['role'],
+    role: 'admin' as 'admin' | 'teacher',
   })
   const [editState, setEditState] = useState<EditState | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null)
@@ -107,21 +107,6 @@ export default function UsersPage() {
         error instanceof AxiosError
           ? error.response?.data?.message ?? 'Failed to update status.'
           : 'Failed to update status.'
-      setToast({ message, tone: 'error' })
-    },
-  })
-
-  const reviewMutation = useMutation({
-    mutationFn: (studentId: string) => studentsApi.reviewStudent(studentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] })
-      setToast({ message: 'User reviewed successfully.', tone: 'success' })
-    },
-    onError: (error) => {
-      const message =
-        error instanceof AxiosError
-          ? error.response?.data?.message ?? 'Failed to review user.'
-          : 'Failed to review user.'
       setToast({ message, tone: 'error' })
     },
   })
@@ -364,7 +349,7 @@ export default function UsersPage() {
                   onChange={(event) =>
                     setCreateForm((prev) => ({
                       ...prev,
-                      role: event.target.value as Student['role'],
+                      role: event.target.value as 'admin' | 'teacher',
                     }))
                   }
                 >

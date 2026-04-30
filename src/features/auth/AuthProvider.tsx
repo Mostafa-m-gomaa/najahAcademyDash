@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { AuthUser } from '../../types/auth'
-import { tokenStorage } from '../../lib/storage'
+import { tokenStorage, userStorage } from '../../lib/storage'
 import * as authApi from '../../api/auth'
 
 interface AuthContextValue {
@@ -9,6 +9,7 @@ interface AuthContextValue {
   user: AuthUser | null
   isLoading: boolean
   setToken: (token: string | null) => void
+  setUser: (user: AuthUser | null) => void
   logout: () => void
 }
 
@@ -18,6 +19,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() =>
     tokenStorage.get(),
   )
+  const [user, setUserState] = useState<AuthUser | null>(() => {
+    const stored = userStorage.get<AuthUser>()
+    return stored ?? null
+  })
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ['auth', 'me'],
@@ -26,12 +31,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     retry: false,
   })
 
+  useEffect(() => {
+    const nextUser = data?.data ?? null
+    if (!nextUser) return
+    setUserState((prev) => {
+      const merged = {
+        ...(prev ?? {}),
+        ...nextUser,
+        role: nextUser.role ?? prev?.role,
+      }
+      userStorage.set(merged)
+      return merged
+    })
+  }, [data])
+
   const setToken = (next: string | null) => {
     setTokenState(next)
     if (next) {
       tokenStorage.set(next)
     } else {
       tokenStorage.clear()
+      setUserState(null)
+      userStorage.clear()
     }
   }
 
@@ -44,12 +65,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       token,
-      user: data?.data ?? null,
+      user,
       isLoading: isFetching && Boolean(token),
       setToken,
+      setUser: (next) => {
+        setUserState(next)
+        if (next) {
+          userStorage.set(next)
+        } else {
+          userStorage.clear()
+        }
+      },
       logout: () => setToken(null),
     }),
-    [token, data, isFetching],
+    [token, user, isFetching],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

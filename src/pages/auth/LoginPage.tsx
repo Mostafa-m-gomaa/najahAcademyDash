@@ -5,10 +5,37 @@ import { motion } from 'framer-motion'
 import * as authApi from '../../api/auth'
 import { useAuth } from '../../features/auth/AuthProvider'
 
+function redactLoginResponse(value: unknown) {
+  if (!value || typeof value !== 'object') return value
+  const record = value as Record<string, unknown>
+  const data = record.data
+  const dataRecord =
+    data && typeof data === 'object' ? (data as Record<string, unknown>) : null
+
+  return {
+    ...record,
+    token: record.token ? '<redacted>' : record.token,
+    accessToken: record.accessToken ? '<redacted>' : record.accessToken,
+    refreshToken: record.refreshToken ? '<redacted>' : record.refreshToken,
+    data: dataRecord
+      ? {
+          ...dataRecord,
+          token: dataRecord.token ? '<redacted>' : dataRecord.token,
+          accessToken: dataRecord.accessToken
+            ? '<redacted>'
+            : dataRecord.accessToken,
+          refreshToken: dataRecord.refreshToken
+            ? '<redacted>'
+            : dataRecord.refreshToken,
+        }
+      : data,
+  }
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { setToken } = useAuth()
+  const { setToken, setUser } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -26,6 +53,10 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
+      if (import.meta.env.DEV) {
+        // Useful for debugging auth payloads without leaking tokens.
+        console.log('[auth] login response', redactLoginResponse(data))
+      }
       const token =
         data.token ?? data.data?.token ?? (data as { accessToken?: string })
           .accessToken
@@ -38,6 +69,10 @@ export default function LoginPage() {
         return
       }
       setToken(token)
+      const nextUser = data.user ?? data.data?.user ?? null
+      if (nextUser) {
+        setUser(nextUser)
+      }
       setToast({ message: 'Login successful.', tone: 'success' })
       const redirectTo = (location.state as { from?: Location })?.from
         ?.pathname

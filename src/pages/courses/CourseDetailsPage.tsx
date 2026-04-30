@@ -4,8 +4,10 @@ import { motion } from 'framer-motion'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
 import * as coursesApi from '../../api/courses'
+import * as essayApi from '../../api/essay'
 import StatusBadge from '../../components/StatusBadge'
 import { formatCurrency } from '../../lib/format'
+import type { EssayQuestion } from '../../types/essay'
 
 export default function CourseDetailsPage() {
   const queryClient = useQueryClient()
@@ -41,6 +43,18 @@ export default function CourseDetailsPage() {
     topicId: '',
     lectureId: '',
   })
+  const [essayCreate, setEssayCreate] = useState({
+    title: '',
+    question: '',
+    description: '',
+  })
+  const [essayEdit, setEssayEdit] = useState<{
+    questionId: string
+    title: string
+    question: string
+    description: string
+    isActive: boolean
+  } | null>(null)
   const [toast, setToast] = useState<{
     message: string
     tone: 'success' | 'error'
@@ -61,6 +75,14 @@ export default function CourseDetailsPage() {
   const course = data?.data
   const topics = course?.topics ?? []
 
+  const { data: essayQuestionsData, isLoading: isEssayLoading } = useQuery({
+    queryKey: ['admin-essay-questions', courseId],
+    queryFn: () => essayApi.adminListEssayQuestions(courseId),
+    enabled: Boolean(courseId),
+  })
+
+  const essayQuestions = essayQuestionsData?.data ?? []
+
   const lectures = useMemo(
     () =>
       topics.flatMap((topic) =>
@@ -76,6 +98,12 @@ export default function CourseDetailsPage() {
   const invalidateCourse = () => {
     queryClient.invalidateQueries({ queryKey: ['course', courseId] })
     queryClient.invalidateQueries({ queryKey: ['courses'] })
+  }
+
+  const invalidateEssay = () => {
+    queryClient.invalidateQueries({
+      queryKey: ['admin-essay-questions', courseId],
+    })
   }
 
   const addTopicMutation = useMutation({
@@ -186,6 +214,80 @@ export default function CourseDetailsPage() {
         error instanceof AxiosError
           ? error.response?.data?.message ?? 'Failed to delete lecture.'
           : 'Failed to delete lecture.'
+      setToast({ message, tone: 'error' })
+    },
+  })
+
+  const createEssayMutation = useMutation({
+    mutationFn: () =>
+      essayApi.adminCreateEssayQuestion(courseId, {
+        title: essayCreate.title.trim(),
+        question: essayCreate.question.trim(),
+        description: essayCreate.description.trim() || undefined,
+      }),
+    onSuccess: () => {
+      setEssayCreate({ title: '', question: '', description: '' })
+      invalidateEssay()
+      setToast({
+        message: 'Essay question created successfully.',
+        tone: 'success',
+      })
+    },
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message ??
+            'Failed to create essay question.'
+          : 'Failed to create essay question.'
+      setToast({ message, tone: 'error' })
+    },
+  })
+
+  const updateEssayMutation = useMutation({
+    mutationFn: () => {
+      if (!essayEdit) {
+        return Promise.reject(new Error('No question selected'))
+      }
+      return essayApi.adminUpdateEssayQuestion(courseId, essayEdit.questionId, {
+        title: essayEdit.title.trim() || undefined,
+        question: essayEdit.question.trim() || undefined,
+        description: essayEdit.description.trim() || undefined,
+      })
+    },
+    onSuccess: () => {
+      setEssayEdit(null)
+      invalidateEssay()
+      setToast({
+        message: 'Essay question updated successfully.',
+        tone: 'success',
+      })
+    },
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message ??
+            'Failed to update essay question.'
+          : 'Failed to update essay question.'
+      setToast({ message, tone: 'error' })
+    },
+  })
+
+  const disableEssayMutation = useMutation({
+    mutationFn: (questionId: string) =>
+      essayApi.adminDisableEssayQuestion(courseId, questionId),
+    onSuccess: () => {
+      invalidateEssay()
+      setToast({
+        message: 'Essay question disabled successfully.',
+        tone: 'success',
+      })
+    },
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message ??
+            'Failed to disable essay question.'
+          : 'Failed to disable essay question.'
       setToast({ message, tone: 'error' })
     },
   })
@@ -608,6 +710,205 @@ export default function CourseDetailsPage() {
           </form>
         </div>
       </section>
+
+      <section className="grid two-col" style={{ marginTop: 16 }}>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3>Essay questions</h3>
+              <p className="muted">Manage questions for this course.</p>
+            </div>
+          </div>
+
+          {isEssayLoading ? (
+            <p className="muted">Loading essay questions...</p>
+          ) : essayQuestions.length ? (
+            <div className="list">
+              {essayQuestions.map((q: EssayQuestion) => (
+                <div key={q.id} className="list-row">
+                  <div>
+                    <p className="list-title">{q.title}</p>
+                    <p className="muted">{q.description ?? 'No description'}</p>
+                  </div>
+                  <div className="list-meta">
+                    <span
+                      className={`badge ${q.isActive ? 'badge-success' : 'badge-muted'}`}
+                    >
+                      {q.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <button
+                      className="button ghost"
+                      type="button"
+                      onClick={() => {
+                        setEssayEdit({
+                          questionId: q.id,
+                          title: q.title ?? '',
+                          question: q.question ?? '',
+                          description: q.description ?? '',
+                          isActive: Boolean(q.isActive),
+                        })
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="button danger"
+                      type="button"
+                      disabled={!q.isActive || disableEssayMutation.isPending}
+                      onClick={() => disableEssayMutation.mutate(q.id)}
+                    >
+                      {disableEssayMutation.isPending
+                        ? 'Disabling...'
+                        : 'Disable'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">No essay questions for this course yet.</p>
+          )}
+        </div>
+
+        <div className="card accent">
+          <h3>Add essay question</h3>
+          <form
+            className="form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (!essayCreate.title.trim() || !essayCreate.question.trim()) {
+                setToast({
+                  message: 'Title and question are required.',
+                  tone: 'error',
+                })
+                return
+              }
+              createEssayMutation.mutate()
+            }}
+          >
+            <label className="field">
+              Title
+              <input
+                value={essayCreate.title}
+                onChange={(event) =>
+                  setEssayCreate((prev) => ({
+                    ...prev,
+                    title: event.target.value,
+                  }))
+                }
+                required
+              />
+            </label>
+            <label className="field">
+              Question
+              <textarea
+                value={essayCreate.question}
+                onChange={(event) =>
+                  setEssayCreate((prev) => ({
+                    ...prev,
+                    question: event.target.value,
+                  }))
+                }
+                rows={4}
+                required
+              />
+            </label>
+            <label className="field">
+              Description (optional)
+              <textarea
+                value={essayCreate.description}
+                onChange={(event) =>
+                  setEssayCreate((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
+                }
+                rows={3}
+              />
+            </label>
+            <button className="button primary" type="submit">
+              {createEssayMutation.isPending ? 'Adding...' : 'Add question'}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {essayEdit ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal" role="dialog" aria-modal="true">
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">Edit essay question</p>
+                <h2>{essayEdit.title || 'Question details'}</h2>
+              </div>
+              <button
+                className="button ghost"
+                type="button"
+                onClick={() => setEssayEdit(null)}
+              >
+                Close
+              </button>
+            </div>
+            <form
+              className="form"
+              onSubmit={(event) => {
+                event.preventDefault()
+                updateEssayMutation.mutate()
+              }}
+            >
+              <label className="field">
+                Title
+                <input
+                  value={essayEdit.title}
+                  onChange={(event) =>
+                    setEssayEdit((prev) =>
+                      prev ? { ...prev, title: event.target.value } : prev,
+                    )
+                  }
+                />
+              </label>
+              <label className="field">
+                Question
+                <textarea
+                  value={essayEdit.question}
+                  onChange={(event) =>
+                    setEssayEdit((prev) =>
+                      prev ? { ...prev, question: event.target.value } : prev,
+                    )
+                  }
+                  rows={4}
+                />
+              </label>
+              <label className="field">
+                Description
+                <textarea
+                  value={essayEdit.description}
+                  onChange={(event) =>
+                    setEssayEdit((prev) =>
+                      prev
+                        ? { ...prev, description: event.target.value }
+                        : prev,
+                    )
+                  }
+                  rows={3}
+                />
+              </label>
+              <div className="modal-actions">
+                <button className="button primary" type="submit">
+                  {updateEssayMutation.isPending ? 'Saving...' : 'Save changes'}
+                </button>
+                <button
+                  className="button ghost"
+                  type="button"
+                  onClick={() => setEssayEdit(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {toast ? (
         <div className={`toast ${toast.tone}`} role="status">
