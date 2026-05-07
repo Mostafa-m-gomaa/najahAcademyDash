@@ -1,0 +1,464 @@
+.card.admin-dictionary-page {
+  padding: 20px;
+}
+
+.card.admin-dictionary-page h1 {
+  margin: 0 0 14px 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.card.admin-dictionary-page .dictionary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card.admin-dictionary-page .letters-section,
+.card.admin-dictionary-page .words-section {
+  background: var(--bg-alt);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card.admin-dictionary-page .section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card.admin-dictionary-page .section-head .muted {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+}
+
+.card.admin-dictionary-page .letters-section h2,
+.card.admin-dictionary-page .words-section h2 {
+  margin: 0 0 12px 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card.admin-dictionary-page .add-letter-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.card.admin-dictionary-page .add-letter-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  font-size: 14px;
+  text-align: center;
+  text-transform: uppercase;
+  background: var(--surface);
+  color: var(--ink);
+  min-width: 140px;
+}
+
+.card.admin-dictionary-page .add-letter-form button,
+.card.admin-dictionary-page .add-word-form button {
+  padding: 10px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.card.admin-dictionary-page .add-letter-form button:hover,
+.card.admin-dictionary-page .add-word-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .add-letter-form button:disabled,
+.card.admin-dictionary-page .add-word-form button:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.card.admin-dictionary-page .btn-primary {
+  padding: 10px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  height: 40px;
+}
+
+.card.admin-dictionary-page .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .btn-primary:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.card.admin-dictionary-page .letters-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.card.admin-dictionary-page .letters-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.card.admin-dictionary-page .letter-item {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.card.admin-dictionary-page .letter-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--stroke);
+  background: var(--surface);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  color: var(--ink);
+}
+
+.card.admin-dictionary-page .letter-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.card.admin-dictionary-page .letter-item.active .letter-button {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.card.admin-dictionary-page .letter-item .delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.card.admin-dictionary-page .letter-item:hover .delete-btn {
+  opacity: 1;
+}
+
+.card.admin-dictionary-page .letter-item .delete-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .letter-item .delete-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+}
+
+.card.admin-dictionary-page .add-word-form {
+  background: var(--surface-alt);
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(227, 221, 210, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card.admin-dictionary-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card.admin-dictionary-page .form-group h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.card.admin-dictionary-page .form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.card.admin-dictionary-page .form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(15, 140, 122, 0.05);
+}
+
+.card.admin-dictionary-page .button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.card.admin-dictionary-page .button-group button {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card.admin-dictionary-page .cancel-btn {
+  background: var(--danger) !important;
+  color: white;
+}
+
+.card.admin-dictionary-page .cancel-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .words-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card.admin-dictionary-page .words-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.card.admin-dictionary-page .word-card {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card.admin-dictionary-page .word-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--accent-soft);
+}
+
+.card.admin-dictionary-page .word-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(227, 221, 210, 0.4);
+}
+
+.card.admin-dictionary-page .word-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.card.admin-dictionary-page .word-item strong {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.card.admin-dictionary-page .arabic-text {
+  font-weight: 600;
+  color: var(--ink);
+  direction: rtl;
+  text-align: right;
+  font-size: 15px;
+}
+
+.card.admin-dictionary-page .meaning {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.card.admin-dictionary-page .word-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(227, 221, 210, 0.4);
+  margin-top: auto;
+}
+
+.card.admin-dictionary-page .edit-btn,
+.card.admin-dictionary-page .delete-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.card.admin-dictionary-page .edit-btn {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.card.admin-dictionary-page .edit-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.card.admin-dictionary-page .delete-btn {
+  background: rgba(200, 76, 61, 0.16);
+  color: var(--danger);
+}
+
+.card.admin-dictionary-page .delete-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.card.admin-dictionary-page .delete-btn:disabled {
+  background: var(--muted);
+  color: #fff;
+  cursor: not-allowed;
+}
+
+.card.admin-dictionary-page .empty-message {
+  text-align: center;
+  color: var(--muted);
+  padding: 24px 12px;
+  font-size: 13px;
+}
+
+.card.admin-dictionary-page .error {
+  color: var(--danger);
+  text-align: center;
+  font-size: 13px;
+}
+
+.card.admin-dictionary-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.card.admin-dictionary-page .modal {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .modal.modal-sm {
+  max-width: 520px;
+}
+
+.card.admin-dictionary-page .modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 0 14px;
+}
+
+.card.admin-dictionary-page .modal-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.card.admin-dictionary-page .modal-header .muted {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+}
+
+.card.admin-dictionary-page .modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: var(--surface-alt);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.card.admin-dictionary-page .modal-close:hover {
+  box-shadow: var(--shadow);
+}
+
+.card.admin-dictionary-page .modal-body {
+  padding: 14px;
+}
+
+@media (max-width: 768px) {
+  .card.admin-dictionary-page .dictionary-container {
+    gap: 14px;
+  }
+
+  .card.admin-dictionary-page .section-head {
+    flex-direction: column;
+  }
+
+  .card.admin-dictionary-page .button-group {
+    flex-direction: column;
+  }
+
+  .card.admin-dictionary-page .word-item {
+    flex-direction: column;
+  }
+}

@@ -11,6 +11,7 @@ export default function Sidebar() {
       ? [
           { label: 'Overview', to: '/' },
           { label: 'My essay', to: '/learn/courses' },
+          { label: 'Dictionary Favorites', to: '/dictionary/favorites' },
           { label: 'Notifications', to: '/notifications' },
         ]
       : [
@@ -18,6 +19,7 @@ export default function Sidebar() {
           { label: 'Users', to: '/users' },
           { label: 'Students', to: '/students' },
           { label: 'Courses', to: '/courses' },
+          { label: 'Dictionary', to: '/dictionary' },
           { label: 'Topics', to: '/topics' },
           { label: 'Exams', to: '/exams' },
           { label: 'Essay questions', to: '/essay-questions' },

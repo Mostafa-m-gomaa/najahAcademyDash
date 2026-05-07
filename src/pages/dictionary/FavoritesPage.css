@@ -1,0 +1,235 @@
+.page.favorites-page {
+  padding: 20px 48px 48px;
+}
+
+.favorites-page .page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.favorites-page h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.favorites-page .favorites-count {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.favorites-page .card {
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.favorites-page .loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.favorites-page .empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.favorites-page .empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.2;
+}
+
+.favorites-page .empty-state h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.favorites-page .empty-state p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.favorites-page .error {
+  text-align: center;
+  padding: 16px;
+  background: rgba(200, 76, 61, 0.08);
+  border-radius: 12px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.favorites-page .favorites-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.favorites-page .letter-section {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+
+.favorites-page .letter-section:hover {
+  transform: translateY(-2px);
+}
+
+.favorites-page .letter-title {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: white;
+  margin: 0;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.favorites-page .words-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+
+.favorites-page .favorite-card {
+  background: var(--bg-alt);
+  border: 1px solid rgba(227, 221, 210, 0.6);
+  border-radius: 14px;
+  padding: 14px;
+  position: relative;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.favorites-page .favorite-card:hover {
+  border-color: var(--accent-soft);
+  box-shadow: var(--shadow);
+}
+
+.favorites-page .word-content {
+  margin-bottom: 6px;
+}
+
+.favorites-page .word-type {
+  margin-bottom: 10px;
+}
+
+.favorites-page .word-type:last-child {
+  margin-bottom: 0;
+}
+
+.favorites-page .type-badge {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.favorites-page .word-item {
+  background: var(--surface);
+  padding: 10px;
+  border-radius: 8px;
+  border-left: 2px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.favorites-page .arabic-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  direction: rtl;
+  text-align: right;
+}
+
+.favorites-page .meaning {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  direction: rtl;
+  text-align: right;
+}
+
+.favorites-page .remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--danger);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorites-page .remove-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow);
+}
+
+.favorites-page .remove-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.favorites-page .added-date {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+@media (max-width: 1024px) {
+  .favorites-page .words-list {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .page.favorites-page {
+    padding: 12px 20px 32px;
+  }
+
+  .favorites-page .words-list {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .favorites-page .page-header {
+    margin-bottom: 16px;
+  }
+
+  .favorites-page h1 {
+    font-size: 20px;
+  }
+}

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { tokenStorage } from '../lib/storage'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:9000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,7 +11,6 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = tokenStorage.get()
   if (token) {
-    config.headers = config.headers ?? {}
     config.headers.Authorization = `Bearer ${token}`
   }
   return config

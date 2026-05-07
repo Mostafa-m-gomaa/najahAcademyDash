@@ -323,6 +323,13 @@ export default function CourseDetailsPage() {
           <span className="price">
             {course ? formatCurrency(course.price) : '--'}
           </span>
+          <Link
+            className="link"
+            to={`/courses/${courseId}/dictionary`}
+            title="Manage course dictionary"
+          >
+            📚 Dictionary
+          </Link>
         </div>
       </div>
 

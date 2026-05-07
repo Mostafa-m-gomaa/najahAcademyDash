@@ -18,6 +18,10 @@ import StudentEssayQuestionPage from '../pages/essay/StudentEssayQuestionPage'
 import NotificationsPage from '../pages/notifications/NotificationsPage'
 import AdminExamsPage from '../pages/exams/AdminExamsPage'
 import NotFoundPage from '../pages/NotFoundPage'
+import AdminDictionaryPage from '../pages/dictionary/AdminDictionaryPage'
+import AdminDictionaryHomePage from '../pages/dictionary/AdminDictionaryHomePage'
+import StudentDictionaryPage from '../pages/dictionary/StudentDictionaryPage'
+import FavoritesPage from '../pages/dictionary/FavoritesPage'
 
 const router = createBrowserRouter([
   {
@@ -37,6 +41,14 @@ const router = createBrowserRouter([
       { path: 'students', element: <StudentsPage /> },
       { path: 'courses', element: <CoursesPage /> },
       { path: 'courses/:courseId', element: <CourseDetailsPage /> },
+      {
+        path: 'courses/:courseId/dictionary',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AdminDictionaryPage />
+          </RequireRole>
+        ),
+      },
       { path: 'topics', element: <TopicsPage /> },
       {
         path: 'exams',
@@ -71,6 +83,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: 'dictionary',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AdminDictionaryHomePage />
+          </RequireRole>
+        ),
+      },
+      {
         path: 'learn/courses',
         element: (
           <RequireRole roles={['student']}>
@@ -94,7 +114,23 @@ const router = createBrowserRouter([
           </RequireRole>
         ),
       },
+      {
+        path: 'learn/courses/:courseId/dictionary',
+        element: (
+          <RequireRole roles={['student']}>
+            <StudentDictionaryPage />
+          </RequireRole>
+        ),
+      },
       { path: 'notifications', element: <NotificationsPage /> },
+      {
+        path: 'dictionary/favorites',
+        element: (
+          <RequireRole roles={['student']}>
+            <FavoritesPage />
+          </RequireRole>
+        ),
+      },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

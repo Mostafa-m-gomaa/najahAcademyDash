@@ -1,0 +1,5 @@
+.admin-dictionary-home .card { max-width: 980px; margin: 20px auto; }
+.admin-dictionary-home .list-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #eee }
+.admin-dictionary-home .list-title { margin:0; font-weight:600 }
+.admin-dictionary-home .list-meta { display:flex; gap:8px }
+.admin-dictionary-home .badge-primary { background:#4caf50; color:white; padding:6px 10px; border-radius:6px; text-decoration:none }
