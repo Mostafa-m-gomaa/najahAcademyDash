@@ -2,10 +2,17 @@ import api from './client'
 import type { ApiResponse } from '../types/api'
 import type { Course, Topic, Lecture } from '../types/courses'
 
+export type CoursePricingPlanInput = {
+  id?: string
+  durationDays: number
+  price: number
+}
+
 export interface CoursePayload {
   title: string
   description: string
-  price: number
+  features: string[]
+  pricingPlans: CoursePricingPlanInput[]
   isPublished?: boolean
   courseImage?: File | null
 }
@@ -13,7 +20,8 @@ export interface CoursePayload {
 export interface CourseUpdatePayload {
   title?: string
   description?: string
-  price?: number
+  features?: string[]
+  pricingPlans?: CoursePricingPlanInput[]
   isPublished?: boolean
   courseImage?: File | null
 }
@@ -49,7 +57,10 @@ const buildCourseForm = (payload: CoursePayload | CourseUpdatePayload) => {
   if (payload.title !== undefined) form.append('title', payload.title)
   if (payload.description !== undefined)
     form.append('description', payload.description)
-  if (payload.price !== undefined) form.append('price', String(payload.price))
+  if (payload.features !== undefined)
+    form.append('features', JSON.stringify(payload.features))
+  if (payload.pricingPlans !== undefined)
+    form.append('pricingPlans', JSON.stringify(payload.pricingPlans))
   if (payload.isPublished !== undefined)
     form.append('isPublished', String(payload.isPublished))
   if (payload.courseImage) form.append('courseImage', payload.courseImage)

@@ -1,0 +1,103 @@
+.rich-text-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rich-text-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rich-text-editor__button {
+  border: 1px solid var(--stroke);
+  background: #fff;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: 13px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.rich-text-editor__button:hover {
+  background: #f8fafc;
+}
+
+.rich-text-editor__button.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.rich-text-editor__content {
+  border-radius: 12px;
+  border: 1px solid var(--stroke);
+  background: #fff;
+  padding: 10px 12px;
+  min-height: 120px;
+}
+
+.rich-text-editor__content .tiptap {
+  outline: none;
+  min-height: inherit;
+  font: 14px/1.5 var(--font-sans);
+  color: var(--text);
+}
+
+.rich-text-editor__content .tiptap p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-editor__content .tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-editor__content .tiptap p.is-editor-empty:first-child::before {
+  color: var(--muted);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.rich-text-editor__content .tiptap strong,
+.rich-text-editor__content .tiptap b {
+  font-weight: 700;
+}
+
+.rich-text-editor__content .tiptap em,
+.rich-text-editor__content .tiptap i {
+  font-style: italic;
+}
+
+.rich-text-editor__content .tiptap u {
+  text-decoration: underline;
+}
+
+.rich-text-content {
+  font: inherit;
+  color: inherit;
+}
+
+.rich-text-content p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-content strong,
+.rich-text-content b {
+  font-weight: 700;
+}
+
+.rich-text-content em,
+.rich-text-content i {
+  font-style: italic;
+}
+
+.rich-text-content u {
+  text-decoration: underline;
+}

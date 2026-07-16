@@ -5,6 +5,11 @@ import { motion } from 'framer-motion'
 import * as authApi from '../../api/auth'
 import { useAuth } from '../../features/auth/AuthProvider'
 
+const ADMIN_EMAIL =
+  import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@najah.com'
+const ADMIN_PASSWORD =
+  import.meta.env.VITE_ADMIN_PASSWORD ?? 'Admin@123456'
+
 function redactLoginResponse(value: unknown) {
   if (!value || typeof value !== 'object') return value
   const record = value as Record<string, unknown>
@@ -74,9 +79,12 @@ export default function LoginPage() {
         setUser(nextUser)
       }
       setToast({ message: 'Login successful.', tone: 'success' })
+      const isTeacher = nextUser?.role === 'teacher'
       const redirectTo = (location.state as { from?: Location })?.from
         ?.pathname
-      navigate(redirectTo ?? '/', { replace: true })
+      navigate(isTeacher ? '/essay-answers' : redirectTo ?? '/', {
+        replace: true,
+      })
     },
     onError: () => {
       const message = 'Unable to login. Please verify your credentials.'
@@ -128,6 +136,17 @@ export default function LoginPage() {
               />
             </label>
             {error ? <p className="error-text">{error}</p> : null}
+            <button
+              className="button ghost"
+              type="button"
+              onClick={() => {
+                setEmail(ADMIN_EMAIL)
+                setPassword(ADMIN_PASSWORD)
+                setError('')
+              }}
+            >
+              Fill admin credentials
+            </button>
             <button className="button primary" type="submit">
               {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
             </button>

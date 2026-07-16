@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import * as coursesApi from '../../api/courses'
 import * as essayApi from '../../api/essay'
+import RichTextContent from '../../components/RichTextContent'
+import RichTextEditor from '../../components/RichTextEditor'
+import { isRichTextEmpty, sanitizeRichText } from '../../lib/richText'
 import type { Course } from '../../types/courses'
 import type { EssayQuestion } from '../../types/essay'
 
@@ -72,8 +75,10 @@ export default function AdminEssayQuestionsPage() {
     mutationFn: () =>
       essayApi.adminCreateEssayQuestion(selectedCourseId, {
         title: createForm.title.trim(),
-        question: createForm.question.trim(),
-        description: createForm.description.trim() || undefined,
+        question: sanitizeRichText(createForm.question),
+        description: isRichTextEmpty(createForm.description)
+          ? undefined
+          : sanitizeRichText(createForm.description),
       }),
     onSuccess: async () => {
       setCreateForm({ title: '', question: '', description: '' })
@@ -100,8 +105,12 @@ export default function AdminEssayQuestionsPage() {
         editState.questionId,
         {
           title: editState.title.trim() || undefined,
-          question: editState.question.trim() || undefined,
-          description: editState.description.trim() || undefined,
+          question: isRichTextEmpty(editState.question)
+            ? undefined
+            : sanitizeRichText(editState.question),
+          description: isRichTextEmpty(editState.description)
+            ? undefined
+            : sanitizeRichText(editState.description),
         },
       )
     },
@@ -184,7 +193,12 @@ export default function AdminEssayQuestionsPage() {
                   <div key={q.id} className="list-row">
                     <div>
                       <p className="list-title">{q.title}</p>
-                      <p className="muted">{q.description ?? 'No description'}</p>
+                      <RichTextContent content={q.question ?? ''} />
+                      {q.description ? (
+                        <RichTextContent content={q.description} className="muted" />
+                      ) : (
+                        <p className="muted">No description</p>
+                      )}
                     </div>
                     <div className="list-meta">
                       <span
@@ -255,7 +269,7 @@ export default function AdminEssayQuestionsPage() {
                   setToast({ message: 'Please select a course.', tone: 'error' })
                   return
                 }
-                if (!createForm.title.trim() || !createForm.question.trim()) {
+                if (!createForm.title.trim() || isRichTextEmpty(createForm.question)) {
                   setToast({
                     message: 'Title and question are required.',
                     tone: 'error',
@@ -278,33 +292,28 @@ export default function AdminEssayQuestionsPage() {
                   required
                 />
               </label>
-              <label className="field">
-                Question
-                <textarea
+              <div className="field">
+                <span>Question</span>
+                <RichTextEditor
                   value={createForm.question}
-                  onChange={(event) =>
-                    setCreateForm((prev) => ({
-                      ...prev,
-                      question: event.target.value,
-                    }))
+                  onChange={(question) =>
+                    setCreateForm((prev) => ({ ...prev, question }))
                   }
-                  rows={4}
-                  required
+                  placeholder="Write the essay question..."
+                  minHeight={140}
                 />
-              </label>
-              <label className="field">
-                Description (optional)
-                <textarea
+              </div>
+              <div className="field">
+                <span>Description (optional)</span>
+                <RichTextEditor
                   value={createForm.description}
-                  onChange={(event) =>
-                    setCreateForm((prev) => ({
-                      ...prev,
-                      description: event.target.value,
-                    }))
+                  onChange={(description) =>
+                    setCreateForm((prev) => ({ ...prev, description }))
                   }
-                  rows={3}
+                  placeholder="Add an optional description..."
+                  minHeight={120}
                 />
-              </label>
+              </div>
               <div className="modal-actions">
                 <button className="button primary" type="submit">
                   {createMutation.isPending ? 'Adding...' : 'Add question'}
@@ -338,6 +347,13 @@ export default function AdminEssayQuestionsPage() {
               className="form"
               onSubmit={(event) => {
                 event.preventDefault()
+                if (!editState.title.trim() || isRichTextEmpty(editState.question)) {
+                  setToast({
+                    message: 'Title and question are required.',
+                    tone: 'error',
+                  })
+                  return
+                }
                 updateMutation.mutate()
               }}
             >
@@ -350,30 +366,28 @@ export default function AdminEssayQuestionsPage() {
                   }
                 />
               </label>
-              <label className="field">
-                Question
-                <textarea
+              <div className="field">
+                <span>Question</span>
+                <RichTextEditor
                   value={editState.question}
-                  onChange={(event) =>
-                    setEditState((prev) =>
-                      prev ? { ...prev, question: event.target.value } : prev,
-                    )
+                  onChange={(question) =>
+                    setEditState((prev) => (prev ? { ...prev, question } : prev))
                   }
-                  rows={4}
+                  placeholder="Write the essay question..."
+                  minHeight={140}
                 />
-              </label>
-              <label className="field">
-                Description
-                <textarea
+              </div>
+              <div className="field">
+                <span>Description (optional)</span>
+                <RichTextEditor
                   value={editState.description}
-                  onChange={(event) =>
-                    setEditState((prev) =>
-                      prev ? { ...prev, description: event.target.value } : prev,
-                    )
+                  onChange={(description) =>
+                    setEditState((prev) => (prev ? { ...prev, description } : prev))
                   }
-                  rows={3}
+                  placeholder="Add an optional description..."
+                  minHeight={120}
                 />
-              </label>
+              </div>
               <div className="modal-actions">
                 <button className="button primary" type="submit">
                   {updateMutation.isPending ? 'Saving...' : 'Save changes'}

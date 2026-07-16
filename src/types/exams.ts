@@ -29,6 +29,7 @@ export interface ExamQuestion {
   prompt: string
   options: ExamQuestionOption[] | string[]
   correctOptionIndex: number
+  timer?: number
   explanation?: string
 }
 

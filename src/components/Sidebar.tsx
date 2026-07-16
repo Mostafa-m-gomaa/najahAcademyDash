@@ -14,18 +14,26 @@ export default function Sidebar() {
           { label: 'Dictionary Favorites', to: '/dictionary/favorites' },
           { label: 'Notifications', to: '/notifications' },
         ]
-      : [
-          { label: 'Overview', to: '/' },
-          { label: 'Users', to: '/users' },
-          { label: 'Students', to: '/students' },
-          { label: 'Courses', to: '/courses' },
-          { label: 'Dictionary', to: '/dictionary' },
-          { label: 'Topics', to: '/topics' },
-          { label: 'Exams', to: '/exams' },
-          { label: 'Essay questions', to: '/essay-questions' },
-          { label: 'Essay answers', to: '/essay-answers' },
-          { label: 'Notifications', to: '/notifications' },
-        ]
+      : role === 'teacher'
+        ? [
+            { label: 'Essay questions', to: '/essay-questions' },
+            { label: 'Essay answers', to: '/essay-answers' },
+          ]
+        : [
+            { label: 'Overview', to: '/' },
+            { label: 'Users', to: '/users' },
+            { label: 'Students', to: '/students' },
+            ...(role === 'admin'
+              ? [{ label: 'Subscriptions', to: '/course-subscriptions' }]
+              : []),
+            { label: 'Courses', to: '/courses' },
+            { label: 'Dictionary', to: '/dictionary' },
+            { label: 'Topics', to: '/topics' },
+            { label: 'Exams', to: '/exams' },
+            { label: 'Essay questions', to: '/essay-questions' },
+            { label: 'Essay answers', to: '/essay-answers' },
+            { label: 'Notifications', to: '/notifications' },
+          ]
 
   return (
     <aside className="sidebar">

@@ -22,6 +22,7 @@ import AdminDictionaryPage from '../pages/dictionary/AdminDictionaryPage'
 import AdminDictionaryHomePage from '../pages/dictionary/AdminDictionaryHomePage'
 import StudentDictionaryPage from '../pages/dictionary/StudentDictionaryPage'
 import FavoritesPage from '../pages/dictionary/FavoritesPage'
+import AdminCourseSubscriptionsPage from '../pages/subscriptions/AdminCourseSubscriptionsPage'
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,14 @@ const router = createBrowserRouter([
       { index: true, element: <OverviewPage /> },
       { path: 'users', element: <UsersPage /> },
       { path: 'students', element: <StudentsPage /> },
+      {
+        path: 'course-subscriptions',
+        element: (
+          <RequireRole roles={['admin']}>
+            <AdminCourseSubscriptionsPage />
+          </RequireRole>
+        ),
+      },
       { path: 'courses', element: <CoursesPage /> },
       { path: 'courses/:courseId', element: <CourseDetailsPage /> },
       {
@@ -61,7 +70,7 @@ const router = createBrowserRouter([
       {
         path: 'essay-questions',
         element: (
-          <RequireRole roles={['admin']}>
+          <RequireRole roles={['admin', 'teacher']}>
             <AdminEssayQuestionsPage />
           </RequireRole>
         ),
@@ -69,7 +78,7 @@ const router = createBrowserRouter([
       {
         path: 'essay-answers',
         element: (
-          <RequireRole roles={['admin']}>
+          <RequireRole roles={['admin', 'teacher']}>
             <AdminEssayAnswersPage />
           </RequireRole>
         ),
@@ -77,7 +86,7 @@ const router = createBrowserRouter([
       {
         path: 'essay-answers/:answerId',
         element: (
-          <RequireRole roles={['admin']}>
+          <RequireRole roles={['admin', 'teacher']}>
             <AdminEssayAnswerDetailsPage />
           </RequireRole>
         ),

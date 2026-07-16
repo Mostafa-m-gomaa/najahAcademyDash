@@ -14,11 +14,20 @@ export interface Topic {
   lectures?: Lecture[]
 }
 
+export interface CoursePricingPlan {
+  id?: string
+  _id?: string
+  durationDays: number
+  price: number
+}
+
 export interface Course {
-  _id: string
+  _id?: string
+  id?: string
   title: string
   description?: string
-  price: number
+  features?: string[]
+  pricingPlans?: CoursePricingPlan[]
   isPublished?: boolean
   courseImage?: string
   topics?: Topic[]

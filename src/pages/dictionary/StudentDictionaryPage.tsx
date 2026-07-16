@@ -17,6 +17,7 @@ export default function StudentDictionaryPage() {
   const { token } = useAuth()
   const queryClient = useQueryClient()
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null)
+  const activeCourseId = courseId ?? ''
 
   const hasCourseId = Boolean(courseId)
 
@@ -66,14 +67,14 @@ export default function StudentDictionaryPage() {
   )
 
   const addToFavoritesMutation = useMutation({
-    mutationFn: (wordId: string) => addToFavorites(courseId, wordId),
+    mutationFn: (wordId: string) => addToFavorites(activeCourseId, wordId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] })
     },
   })
 
   const removeFromFavoritesMutation = useMutation({
-    mutationFn: (wordId: string) => removeFromFavorites(courseId, wordId),
+    mutationFn: (wordId: string) => removeFromFavorites(activeCourseId, wordId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['favorites'] })
     },

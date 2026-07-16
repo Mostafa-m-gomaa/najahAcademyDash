@@ -6,7 +6,11 @@ import { AxiosError } from 'axios'
 import * as coursesApi from '../../api/courses'
 import * as essayApi from '../../api/essay'
 import StatusBadge from '../../components/StatusBadge'
-import { formatCurrency } from '../../lib/format'
+import {
+  formatCurrency,
+  formatDurationDays,
+  getCourseStartingPrice,
+} from '../../lib/format'
 import type { EssayQuestion } from '../../types/essay'
 
 export default function CourseDetailsPage() {
@@ -321,7 +325,12 @@ export default function CourseDetailsPage() {
             tone={course?.isPublished ? 'success' : 'muted'}
           />
           <span className="price">
-            {course ? formatCurrency(course.price) : '--'}
+            {(() => {
+              const starting = getCourseStartingPrice(course?.pricingPlans)
+              return starting != null
+                ? `From ${formatCurrency(starting)}`
+                : 'No plans'
+            })()}
           </span>
           <Link
             className="link"
@@ -332,6 +341,79 @@ export default function CourseDetailsPage() {
           </Link>
         </div>
       </div>
+
+      {course?.features?.length || course?.pricingPlans?.length ? (
+        <section className="grid two-col" style={{ marginBottom: 16 }}>
+          <div className="card">
+            <h3>Features</h3>
+            {course.features?.length ? (
+              <ul style={{ margin: 0, paddingInlineStart: 18 }}>
+                {course.features.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">No features listed.</p>
+            )}
+          </div>
+          <div className="card">
+            <h3>Pricing plans</h3>
+            {course.pricingPlans?.length ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th
+                      style={{
+                        textAlign: 'start',
+                        padding: '8px 0',
+                        borderBottom: '1px solid var(--stroke)',
+                      }}
+                    >
+                      Duration
+                    </th>
+                    <th
+                      style={{
+                        textAlign: 'start',
+                        padding: '8px 0',
+                        borderBottom: '1px solid var(--stroke)',
+                      }}
+                    >
+                      Price
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...course.pricingPlans]
+                    .sort((a, b) => a.durationDays - b.durationDays)
+                    .map((plan) => (
+                      <tr key={plan.id ?? plan._id ?? plan.durationDays}>
+                        <td
+                          style={{
+                            padding: '8px 0',
+                            borderBottom: '1px solid var(--stroke)',
+                          }}
+                        >
+                          {formatDurationDays(plan.durationDays)}
+                        </td>
+                        <td
+                          style={{
+                            padding: '8px 0',
+                            borderBottom: '1px solid var(--stroke)',
+                          }}
+                          className="price"
+                        >
+                          {formatCurrency(plan.price)}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="muted">No pricing plans.</p>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {isLoading ? (
         <p className="muted">Loading course...</p>

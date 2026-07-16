@@ -3,10 +3,15 @@ import { AxiosError } from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import * as studentsApi from '../../api/students'
+import * as coursesApi from '../../api/courses'
+import * as subscriptionsApi from '../../api/subscriptions'
 import StatusBadge from '../../components/StatusBadge'
+import type { Course } from '../../types/courses'
 import type { Student } from '../../types/students'
 
 const roleOptions = ['all', 'student'] as const
+
+const emptyUsers: Student[] = []
 
 type RoleFilter = (typeof roleOptions)[number]
 
@@ -19,14 +24,25 @@ type EditState = {
   newPassword: string
 }
 
+type SubscriptionState = {
+  student: Student
+  courseId: string
+  startDate: string
+  endDate: string
+}
+
 const getUserId = (user: { _id?: string; id?: string }) =>
   user._id ?? user.id ?? ''
+
+const getCourseId = (course: { _id?: string; id?: string }) =>
+  course._id ?? course.id ?? ''
 
 export default function UsersPage() {
   const queryClient = useQueryClient()
   const [onlyNew, setOnlyNew] = useState(false)
   const [includeInactive, setIncludeInactive] = useState(false)
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
+  const [search, setSearch] = useState('')
   const [createForm, setCreateForm] = useState({
     fullName: '',
     email: '',
@@ -40,6 +56,9 @@ export default function UsersPage() {
   } | null>(null)
   const [passwordTarget, setPasswordTarget] = useState<Student | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState | null>(
+    null,
+  )
 
   useEffect(() => {
     if (!toast) return
@@ -52,13 +71,30 @@ export default function UsersPage() {
     queryFn: () => studentsApi.listStudents({ onlyNew, includeInactive }),
   })
 
-  const users = data?.data ?? []
+  const { data: coursesData, isLoading: isCoursesLoading } = useQuery({
+    queryKey: ['courses'],
+    queryFn: coursesApi.listCourses,
+    enabled: Boolean(subscriptionState),
+  })
+
+  const courses = coursesData?.data ?? ([] as Course[])
+
+  const users = data?.data ?? emptyUsers
 
   const filteredUsers = useMemo(() => {
     const students = users.filter((user) => user.role === 'student')
-    if (roleFilter === 'all') return students
-    return students
-  }, [users, roleFilter])
+    const query = search.trim().toLowerCase()
+    const matchesSearch = (value: string) => value.toLowerCase().includes(query)
+
+    const searchedStudents = query
+      ? students.filter(
+          (user) => matchesSearch(user.fullName) || matchesSearch(user.email),
+        )
+      : students
+
+    if (roleFilter === 'all') return searchedStudents
+    return searchedStudents
+  }, [users, roleFilter, search])
 
   const createMutation = useMutation({
     mutationFn: studentsApi.createStudent,
@@ -143,6 +179,21 @@ export default function UsersPage() {
     },
   })
 
+  const subscriptionMutation = useMutation({
+    mutationFn: subscriptionsApi.createCourseSubscription,
+    onSuccess: () => {
+      setSubscriptionState(null)
+      setToast({ message: 'Subscription created successfully.', tone: 'success' })
+    },
+    onError: (error) => {
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message ?? 'Failed to create subscription.'
+          : 'Failed to create subscription.'
+      setToast({ message, tone: 'error' })
+    },
+  })
+
   return (
     <motion.div
       className="page"
@@ -188,6 +239,14 @@ export default function UsersPage() {
                     </option>
                   ))}
                 </select>
+              </label>
+              <label className="field">
+                Search
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search by name or email"
+                />
               </label>
             </div>
           </div>
@@ -262,6 +321,20 @@ export default function UsersPage() {
                       Change password
                     </button>
                     <button
+                      className="button ghost"
+                      type="button"
+                      onClick={() =>
+                        setSubscriptionState({
+                          student: user,
+                          courseId: '',
+                          startDate: '',
+                          endDate: '',
+                        })
+                      }
+                    >
+                      Add subscription
+                    </button>
+                    <button
                       className="button danger"
                       type="button"
                       onClick={() => setDeleteTarget(user)}
@@ -273,7 +346,7 @@ export default function UsersPage() {
               ))}
             </div>
           ) : (
-            <p className="muted">No users found.</p>
+            <p className="muted">No students found.</p>
           )}
         </div>
 
@@ -482,6 +555,130 @@ export default function UsersPage() {
                   className="button ghost"
                   type="button"
                   onClick={() => setPasswordTarget(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {subscriptionState ? (
+        <div className="modal-backdrop" role="presentation">
+          <div className="modal" role="dialog" aria-modal="true">
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">Create subscription</p>
+                <h2>{subscriptionState.student.fullName}</h2>
+              </div>
+              <button
+                className="button ghost"
+                type="button"
+                onClick={() => setSubscriptionState(null)}
+              >
+                Close
+              </button>
+            </div>
+            <form
+              className="form"
+              onSubmit={(event) => {
+                event.preventDefault()
+
+                const studentId = getUserId(subscriptionState.student)
+                const courseId = subscriptionState.courseId.trim()
+                const startDateValue = subscriptionState.startDate.trim()
+                const endDateValue = subscriptionState.endDate.trim()
+
+                if (!courseId || !startDateValue || !endDateValue) {
+                  setToast({
+                    message: 'Please select a course and dates.',
+                    tone: 'error',
+                  })
+                  return
+                }
+
+                const startIso = new Date(startDateValue).toISOString()
+                const endIso = new Date(endDateValue).toISOString()
+
+                if (Number.isNaN(Date.parse(startIso)) || Number.isNaN(Date.parse(endIso))) {
+                  setToast({ message: 'Please enter valid dates.', tone: 'error' })
+                  return
+                }
+
+                if (Date.parse(startIso) > Date.parse(endIso)) {
+                  setToast({
+                    message: 'Start date must be before end date.',
+                    tone: 'error',
+                  })
+                  return
+                }
+
+                subscriptionMutation.mutate({
+                  userId: studentId,
+                  courseId,
+                  startDate: startIso,
+                  endDate: endIso,
+                })
+              }}
+            >
+              <label className="field">
+                Course
+                <select
+                  value={subscriptionState.courseId}
+                  onChange={(event) =>
+                    setSubscriptionState((prev) =>
+                      prev ? { ...prev, courseId: event.target.value } : prev,
+                    )
+                  }
+                  required
+                  disabled={isCoursesLoading}
+                >
+                  <option value="">
+                    {isCoursesLoading ? 'Loading courses...' : 'Select a course'}
+                  </option>
+                  {courses.map((course) => (
+                    <option key={getCourseId(course)} value={getCourseId(course)}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                Start date
+                <input
+                  type="date"
+                  value={subscriptionState.startDate}
+                  onChange={(event) =>
+                    setSubscriptionState((prev) =>
+                      prev ? { ...prev, startDate: event.target.value } : prev,
+                    )
+                  }
+                  required
+                />
+              </label>
+              <label className="field">
+                End date
+                <input
+                  type="date"
+                  value={subscriptionState.endDate}
+                  onChange={(event) =>
+                    setSubscriptionState((prev) =>
+                      prev ? { ...prev, endDate: event.target.value } : prev,
+                    )
+                  }
+                  required
+                />
+              </label>
+
+              <div className="modal-actions">
+                <button className="button primary" type="submit">
+                  {subscriptionMutation.isPending ? 'Creating...' : 'Create subscription'}
+                </button>
+                <button
+                  className="button ghost"
+                  type="button"
+                  onClick={() => setSubscriptionState(null)}
                 >
                   Cancel
                 </button>

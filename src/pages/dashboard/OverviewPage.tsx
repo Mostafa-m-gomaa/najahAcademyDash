@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import * as coursesApi from '../../api/courses'
 import StatCard from '../../components/StatCard'
-import { formatCurrency } from '../../lib/format'
+import {
+  formatCurrency,
+  getCourseStartingPrice,
+} from '../../lib/format'
 
 export default function OverviewPage() {
   const { data, isLoading } = useQuery({
@@ -13,8 +16,8 @@ export default function OverviewPage() {
 
   const courses = data?.data ?? []
   const publishedCount = courses.filter((course) => course.isPublished).length
-  const totalRevenue = courses.reduce(
-    (sum, course) => sum + (course.price ?? 0),
+  const planCount = courses.reduce(
+    (sum, course) => sum + (course.pricingPlans?.length ?? 0),
     0,
   )
 
@@ -28,7 +31,7 @@ export default function OverviewPage() {
       <section className="grid stats">
         <StatCard label="Total courses" value={`${courses.length}`} />
         <StatCard label="Published" value={`${publishedCount}`} />
-        <StatCard label="Total revenue" value={formatCurrency(totalRevenue)} />
+        <StatCard label="Pricing plans" value={`${planCount}`} />
       </section>
 
       <section className="grid two-col">
@@ -46,20 +49,30 @@ export default function OverviewPage() {
             <p className="muted">Loading courses...</p>
           ) : courses.length ? (
             <div className="list">
-              {courses.slice(0, 5).map((course) => (
-                <div key={course._id} className="list-row">
-                  <div>
-                    <p className="list-title">{course.title}</p>
-                    <p className="muted">{course.description ?? 'No summary'}</p>
+              {courses.slice(0, 5).map((course) => {
+                const courseId = course._id ?? course.id ?? ''
+                const starting = getCourseStartingPrice(course.pricingPlans)
+                return (
+                  <div key={courseId} className="list-row">
+                    <div>
+                      <p className="list-title">{course.title}</p>
+                      <p className="muted">
+                        {course.description ?? 'No summary'}
+                      </p>
+                    </div>
+                    <div className="list-meta">
+                      <span className="badge badge-muted">
+                        {course.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                      <span className="price">
+                        {starting != null
+                          ? `From ${formatCurrency(starting)}`
+                          : 'No plans'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="list-meta">
-                    <span className="badge badge-muted">
-                      {course.isPublished ? 'Published' : 'Draft'}
-                    </span>
-                    <span className="price">{formatCurrency(course.price)}</span>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <p className="muted">No courses yet. Create your first course.</p>

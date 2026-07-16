@@ -13,6 +13,12 @@ type FavoriteItem = {
   adjective?: { arabic: string; meaning: string }
 }
 
+function getFavoriteId(favorite: FavoriteItem): string | null {
+  if (typeof favorite.wordId === 'string') return favorite.wordId
+  if (typeof favorite._id === 'string') return favorite._id
+  return null
+}
+
 export default function FavoritesPage() {
   const navigate = useNavigate()
   const { token } = useAuth()
@@ -96,7 +102,10 @@ export default function FavoritesPage() {
               </div>
               <div className="words-grid">
                 {groupedByLetter[letter].map((favorite) => (
-                  <div key={favorite.wordId || favorite._id} className="word-card">
+                  <div
+                    key={getFavoriteId(favorite) ?? favorite.letter ?? letter}
+                    className="word-card"
+                  >
                     {favorite.verb && (
                       <div className="word-entry">
                         <div className="word-header">
@@ -138,12 +147,16 @@ export default function FavoritesPage() {
                     )}
                     <button
                       className="remove-btn"
-                      onClick={() =>
-                        removeFromFavoritesMutation.mutate(
-                          favorite.wordId || favorite._id
-                        )
+                      onClick={() => {
+                        const favoriteId = getFavoriteId(favorite)
+                        if (favoriteId) {
+                          removeFromFavoritesMutation.mutate(favoriteId)
+                        }
+                      }}
+                      disabled={
+                        removeFromFavoritesMutation.isPending ||
+                        !getFavoriteId(favorite)
                       }
-                      disabled={removeFromFavoritesMutation.isPending}
                       aria-label="Remove from favorites"
                     >
                       ★ Remove

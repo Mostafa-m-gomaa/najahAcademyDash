@@ -4,6 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import * as coursesApi from '../../api/courses'
 import * as examsApi from '../../api/exams'
+import RichTextContent from '../../components/RichTextContent'
+import RichTextEditor from '../../components/RichTextEditor'
+import { isRichTextEmpty, sanitizeRichText } from '../../lib/richText'
 import type { Course } from '../../types/courses'
 import type { Exam, ExamQuestion, QuestionGroup } from '../../types/exams'
 
@@ -20,6 +23,14 @@ const buildImageUrl = (value?: string) => {
   if (value.startsWith('http')) return value
   if (value.startsWith('/uploads')) return `${apiOrigin}${value}`
   return `${apiOrigin}/uploads/${value}`
+}
+
+const parseOptionalTimer = (value: string): number | null | undefined => {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const parsed = Number(trimmed)
+  if (!Number.isInteger(parsed) || parsed <= 0) return null
+  return parsed
 }
 
 type Toast = { message: string; tone: 'success' | 'error' }
@@ -292,13 +303,21 @@ export default function AdminExamsPage() {
     prompt: string
     options: string[]
     correctOptionIndex: number
+    timer: string
     explanation: string
-  }>({ prompt: '', options: ['', ''], correctOptionIndex: 0, explanation: '' })
+  }>({
+    prompt: '',
+    options: ['', ''],
+    correctOptionIndex: 0,
+    timer: '',
+    explanation: '',
+  })
   const [questionEdit, setQuestionEdit] = useState<{
     id: string
     prompt: string
     options: string[]
     correctOptionIndex: number
+    timer: string
     explanation: string
   } | null>(null)
   const [questionDelete, setQuestionDelete] = useState<ExamQuestion | null>(null)
@@ -363,11 +382,20 @@ export default function AdminExamsPage() {
       if (!questionTargetExamId) {
         return Promise.reject(new Error('Please select an exam.'))
       }
+      const timer = parseOptionalTimer(questionCreate.timer)
+      if (timer === null) {
+        return Promise.reject(
+          new Error('Timer must be a positive whole number of seconds.'),
+        )
+      }
       return examsApi.adminCreateExamQuestion(selectedCourseId, questionTargetExamId, {
-        prompt: questionCreate.prompt.trim(),
+        prompt: sanitizeRichText(questionCreate.prompt),
         options,
         correctOptionIndex: questionCreate.correctOptionIndex,
-        explanation: questionCreate.explanation.trim() || undefined,
+        ...(timer !== undefined ? { timer } : {}),
+        explanation: isRichTextEmpty(questionCreate.explanation)
+          ? undefined
+          : sanitizeRichText(questionCreate.explanation),
       })
     },
     onSuccess: async () => {
@@ -376,6 +404,7 @@ export default function AdminExamsPage() {
         prompt: '',
         options: ['', ''],
         correctOptionIndex: 0,
+        timer: '',
         explanation: '',
       })
       if (questionTargetExamId === selectedExamId) {
@@ -400,15 +429,24 @@ export default function AdminExamsPage() {
         correctOptionIndex: questionEdit.correctOptionIndex,
       })
       if (error) return Promise.reject(new Error(error))
+      const timer = parseOptionalTimer(questionEdit.timer)
+      if (timer === null) {
+        return Promise.reject(
+          new Error('Timer must be a positive whole number of seconds.'),
+        )
+      }
       return examsApi.adminUpdateExamQuestion(
         selectedCourseId,
         selectedExamId,
         questionEdit.id,
         {
-          prompt: questionEdit.prompt.trim() || undefined,
+          prompt: sanitizeRichText(questionEdit.prompt) || undefined,
           options,
           correctOptionIndex: questionEdit.correctOptionIndex,
-          explanation: questionEdit.explanation.trim() || undefined,
+          ...(timer !== undefined ? { timer } : {}),
+          explanation: isRichTextEmpty(questionEdit.explanation)
+            ? undefined
+            : sanitizeRichText(questionEdit.explanation),
         },
       )
     },
@@ -660,13 +698,18 @@ export default function AdminExamsPage() {
                 {questions.map((question, index) => (
                   <div key={question.id} className="list-row">
                     <div>
-                      <p className="list-title">
-                        {index + 1}. {question.prompt}
-                      </p>
+                      <div className="list-title">
+                        {index + 1}.{' '}
+                        <RichTextContent content={question.prompt} />
+                      </div>
                       <p className="muted">
                         Correct:{' '}
                         {normalizeOptions(question.options)[question.correctOptionIndex] ??
                           '—'}
+                      </p>
+                      <p className="muted">
+                        Timer:{' '}
+                        {typeof question.timer === 'number' ? `${question.timer}s` : '—'}
                       </p>
                     </div>
                     <div className="list-meta">
@@ -679,6 +722,8 @@ export default function AdminExamsPage() {
                             prompt: question.prompt ?? '',
                             options: normalizeOptions(question.options),
                             correctOptionIndex: question.correctOptionIndex ?? 0,
+                            timer:
+                              question.timer != null ? String(question.timer) : '',
                             explanation: question.explanation ?? '',
                           })
                         }
@@ -1081,7 +1126,7 @@ export default function AdminExamsPage() {
                   setToast({ message: 'Please select an exam.', tone: 'error' })
                   return
                 }
-                if (!questionCreate.prompt.trim()) {
+                if (isRichTextEmpty(questionCreate.prompt)) {
                   setToast({ message: 'Prompt is required.', tone: 'error' })
                   return
                 }
@@ -1122,17 +1167,15 @@ export default function AdminExamsPage() {
                   ))}
                 </select>
               </label>
-              <label className="field">
-                Prompt
-                <textarea
+              <div className="field">
+                <span>Prompt</span>
+                <RichTextEditor
                   value={questionCreate.prompt}
-                  onChange={(event) =>
-                    setQuestionCreate((p) => ({ ...p, prompt: event.target.value }))
-                  }
-                  rows={3}
-                  required
+                  onChange={(prompt) => setQuestionCreate((p) => ({ ...p, prompt }))}
+                  placeholder="Write the question prompt..."
+                  minHeight={140}
                 />
-              </label>
+              </div>
               <div className="card">
                 <h3>Options</h3>
                 {questionCreate.options.map((opt, idx) => (
@@ -1210,15 +1253,29 @@ export default function AdminExamsPage() {
                 </select>
               </label>
               <label className="field">
-                Explanation (optional)
-                <textarea
-                  value={questionCreate.explanation}
+                Timer (seconds, optional)
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={questionCreate.timer}
                   onChange={(event) =>
-                    setQuestionCreate((p) => ({ ...p, explanation: event.target.value }))
+                    setQuestionCreate((p) => ({ ...p, timer: event.target.value }))
                   }
-                  rows={3}
+                  placeholder="e.g. 60"
                 />
               </label>
+              <div className="field">
+                <span>Explanation (optional)</span>
+                <RichTextEditor
+                  value={questionCreate.explanation}
+                  onChange={(explanation) =>
+                    setQuestionCreate((p) => ({ ...p, explanation }))
+                  }
+                  placeholder="Add an optional explanation..."
+                  minHeight={120}
+                />
+              </div>
               <div className="modal-actions">
                 <button className="button primary" type="submit">
                   {questionCreateMutation.isPending ? 'Adding...' : 'Add question'}
@@ -1249,24 +1306,24 @@ export default function AdminExamsPage() {
               className="form"
               onSubmit={(event) => {
                 event.preventDefault()
-                if (!questionEdit.prompt.trim()) {
+                if (isRichTextEmpty(questionEdit.prompt)) {
                   setToast({ message: 'Prompt is required.', tone: 'error' })
                   return
                 }
                 questionUpdateMutation.mutate()
               }}
             >
-              <label className="field">
-                Prompt
-                <textarea
+              <div className="field">
+                <span>Prompt</span>
+                <RichTextEditor
                   value={questionEdit.prompt}
-                  onChange={(event) =>
-                    setQuestionEdit((p) => (p ? { ...p, prompt: event.target.value } : p))
+                  onChange={(prompt) =>
+                    setQuestionEdit((p) => (p ? { ...p, prompt } : p))
                   }
-                  rows={3}
-                  required
+                  placeholder="Write the question prompt..."
+                  minHeight={140}
                 />
-              </label>
+              </div>
               <div className="card">
                 <h3>Options</h3>
                 {questionEdit.options.map((opt, idx) => (
@@ -1345,17 +1402,29 @@ export default function AdminExamsPage() {
                 </select>
               </label>
               <label className="field">
-                Explanation (optional)
-                <textarea
-                  value={questionEdit.explanation}
+                Timer (seconds, optional)
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={questionEdit.timer}
                   onChange={(event) =>
-                    setQuestionEdit((p) =>
-                      p ? { ...p, explanation: event.target.value } : p,
-                    )
+                    setQuestionEdit((p) => (p ? { ...p, timer: event.target.value } : p))
                   }
-                  rows={3}
+                  placeholder="e.g. 60"
                 />
               </label>
+              <div className="field">
+                <span>Explanation (optional)</span>
+                <RichTextEditor
+                  value={questionEdit.explanation}
+                  onChange={(explanation) =>
+                    setQuestionEdit((p) => (p ? { ...p, explanation } : p))
+                  }
+                  placeholder="Add an optional explanation..."
+                  minHeight={120}
+                />
+              </div>
               <div className="modal-actions">
                 <button className="button primary" type="submit">
                   {questionUpdateMutation.isPending ? 'Saving...' : 'Save changes'}

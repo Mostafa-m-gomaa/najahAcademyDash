@@ -135,6 +135,7 @@ export async function adminCreateExamQuestion(
     prompt: string
     options: string[]
     correctOptionIndex: number
+    timer?: number
     explanation?: string
   },
 ) {
@@ -153,6 +154,7 @@ export async function adminUpdateExamQuestion(
     prompt?: string
     options?: string[]
     correctOptionIndex?: number
+    timer?: number
     explanation?: string
   },
 ) {
