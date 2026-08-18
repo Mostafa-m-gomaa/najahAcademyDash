@@ -14,16 +14,19 @@ export default function RichTextContent({
 
   const hasHtmlTags = /<[^>]+>/.test(content)
   const sanitized = sanitizeRichText(content)
+  const classes = `question-content rich-text-content ${className}`.trim()
 
   if (!hasHtmlTags) {
     return (
-      <span className={`rich-text-content ${className}`.trim()}>{content}</span>
+      <span className={`${classes} rich-text-content--plain`.trim()}>
+        {content}
+      </span>
     )
   }
 
   return (
     <div
-      className={`rich-text-content ${className}`.trim()}
+      className={classes}
       dangerouslySetInnerHTML={{ __html: sanitized }}
     />
   )

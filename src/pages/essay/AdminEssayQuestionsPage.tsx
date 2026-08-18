@@ -292,26 +292,26 @@ export default function AdminEssayQuestionsPage() {
                   required
                 />
               </label>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Question</span>
                 <RichTextEditor
                   value={createForm.question}
                   onChange={(question) =>
                     setCreateForm((prev) => ({ ...prev, question }))
                   }
-                  placeholder="Write the essay question..."
-                  minHeight={140}
+                  placeholder="اكتب سؤال المقال هنا..."
+                  minHeight={160}
                 />
               </div>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Description (optional)</span>
                 <RichTextEditor
                   value={createForm.description}
                   onChange={(description) =>
                     setCreateForm((prev) => ({ ...prev, description }))
                   }
-                  placeholder="Add an optional description..."
-                  minHeight={120}
+                  placeholder="أضف وصفًا اختياريًا..."
+                  minHeight={140}
                 />
               </div>
               <div className="modal-actions">
@@ -366,26 +366,26 @@ export default function AdminEssayQuestionsPage() {
                   }
                 />
               </label>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Question</span>
                 <RichTextEditor
                   value={editState.question}
                   onChange={(question) =>
                     setEditState((prev) => (prev ? { ...prev, question } : prev))
                   }
-                  placeholder="Write the essay question..."
-                  minHeight={140}
+                  placeholder="اكتب سؤال المقال هنا..."
+                  minHeight={160}
                 />
               </div>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Description (optional)</span>
                 <RichTextEditor
                   value={editState.description}
                   onChange={(description) =>
                     setEditState((prev) => (prev ? { ...prev, description } : prev))
                   }
-                  placeholder="Add an optional description..."
-                  minHeight={120}
+                  placeholder="أضف وصفًا اختياريًا..."
+                  minHeight={140}
                 />
               </div>
               <div className="modal-actions">

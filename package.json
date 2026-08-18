@@ -11,15 +11,12 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.10",
-    "@tiptap/extension-placeholder": "^3.27.3",
-    "@tiptap/extension-underline": "^3.27.3",
-    "@tiptap/react": "^3.27.3",
-    "@tiptap/starter-kit": "^3.27.3",
     "axios": "^1.7.9",
     "dompurify": "^3.4.11",
     "framer-motion": "^11.2.10",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-quill-new": "^3.8.3",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {

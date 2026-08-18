@@ -1,12 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import * as coursesApi from '../../api/courses'
 import * as examsApi from '../../api/exams'
 import RichTextContent from '../../components/RichTextContent'
-import RichTextEditor from '../../components/RichTextEditor'
-import { isRichTextEmpty, sanitizeRichText } from '../../lib/richText'
+import RichTextEditor, {
+  type RichTextEditorHandle,
+} from '../../components/RichTextEditor'
+import {
+  isRichTextEmpty,
+  normalizePromptHtmlForEditor,
+  sanitizeRichText,
+  serializePromptHtmlForSave,
+} from '../../lib/richText'
 import type { Course } from '../../types/courses'
 import type { Exam, ExamQuestion, QuestionGroup } from '../../types/exams'
 
@@ -321,6 +328,8 @@ export default function AdminExamsPage() {
     explanation: string
   } | null>(null)
   const [questionDelete, setQuestionDelete] = useState<ExamQuestion | null>(null)
+  const createPromptEditorRef = useRef<RichTextEditorHandle>(null)
+  const editPromptEditorRef = useRef<RichTextEditorHandle>(null)
 
   useEffect(() => {
     if (!questionTargetGroupId && selectedGroupId) {
@@ -388,8 +397,13 @@ export default function AdminExamsPage() {
           new Error('Timer must be a positive whole number of seconds.'),
         )
       }
+      const rawPromptHtml =
+        createPromptEditorRef.current?.getHtmlForSave() ?? questionCreate.prompt
+      const promptHtml = sanitizeRichText(serializePromptHtmlForSave(rawPromptHtml))
+      console.log('[exam-question] payload.prompt', promptHtml)
+      console.log('[exam-question] hasBr', /<br\s*\/?>/i.test(promptHtml))
       return examsApi.adminCreateExamQuestion(selectedCourseId, questionTargetExamId, {
-        prompt: sanitizeRichText(questionCreate.prompt),
+        prompt: promptHtml,
         options,
         correctOptionIndex: questionCreate.correctOptionIndex,
         ...(timer !== undefined ? { timer } : {}),
@@ -398,7 +412,11 @@ export default function AdminExamsPage() {
           : sanitizeRichText(questionCreate.explanation),
       })
     },
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      console.log(
+        '[exam-question] prompt after save',
+        response?.data?.prompt ?? response,
+      )
       setIsQuestionCreateOpen(false)
       setQuestionCreate({
         prompt: '',
@@ -435,12 +453,17 @@ export default function AdminExamsPage() {
           new Error('Timer must be a positive whole number of seconds.'),
         )
       }
+      const rawPromptHtml =
+        editPromptEditorRef.current?.getHtmlForSave() ?? questionEdit.prompt
+      const promptHtml = sanitizeRichText(serializePromptHtmlForSave(rawPromptHtml))
+      console.log('[exam-question] payload.prompt', promptHtml)
+      console.log('[exam-question] hasBr', /<br\s*\/?>/i.test(promptHtml))
       return examsApi.adminUpdateExamQuestion(
         selectedCourseId,
         selectedExamId,
         questionEdit.id,
         {
-          prompt: sanitizeRichText(questionEdit.prompt) || undefined,
+          prompt: promptHtml || undefined,
           options,
           correctOptionIndex: questionEdit.correctOptionIndex,
           ...(timer !== undefined ? { timer } : {}),
@@ -450,7 +473,11 @@ export default function AdminExamsPage() {
         },
       )
     },
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      console.log(
+        '[exam-question] prompt after save',
+        response?.data?.prompt ?? response,
+      )
       setQuestionEdit(null)
       await invalidateQuestions()
       setToast({ message: 'Question updated successfully.', tone: 'success' })
@@ -698,10 +725,11 @@ export default function AdminExamsPage() {
                 {questions.map((question, index) => (
                   <div key={question.id} className="list-row">
                     <div>
-                      <div className="list-title">
-                        {index + 1}.{' '}
-                        <RichTextContent content={question.prompt} />
-                      </div>
+                      <span className="list-title">{index + 1}.</span>
+                      <RichTextContent
+                        content={question.prompt}
+                        className="question-content"
+                      />
                       <p className="muted">
                         Correct:{' '}
                         {normalizeOptions(question.options)[question.correctOptionIndex] ??
@@ -719,7 +747,7 @@ export default function AdminExamsPage() {
                         onClick={() =>
                           setQuestionEdit({
                             id: question.id,
-                            prompt: question.prompt ?? '',
+                            prompt: normalizePromptHtmlForEditor(question.prompt ?? ''),
                             options: normalizeOptions(question.options),
                             correctOptionIndex: question.correctOptionIndex ?? 0,
                             timer:
@@ -1104,7 +1132,7 @@ export default function AdminExamsPage() {
       {/* Question create */}
       {isQuestionCreateOpen ? (
         <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true">
+          <div className="modal modal-wide" role="dialog" aria-modal="true">
             <div className="modal-header">
               <div>
                 <p className="eyebrow">Add question</p>
@@ -1167,13 +1195,14 @@ export default function AdminExamsPage() {
                   ))}
                 </select>
               </label>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Prompt</span>
                 <RichTextEditor
+                  ref={createPromptEditorRef}
                   value={questionCreate.prompt}
                   onChange={(prompt) => setQuestionCreate((p) => ({ ...p, prompt }))}
-                  placeholder="Write the question prompt..."
-                  minHeight={140}
+                  placeholder="اكتب نص السؤال هنا..."
+                  minHeight={160}
                 />
               </div>
               <div className="card">
@@ -1181,8 +1210,9 @@ export default function AdminExamsPage() {
                 {questionCreate.options.map((opt, idx) => (
                   <label key={idx} className="field">
                     Option {idx + 1}
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="option-input-row">
                       <input
+                        className="input-rtl"
                         value={opt}
                         onChange={(event) =>
                           setQuestionCreate((p) => {
@@ -1265,15 +1295,15 @@ export default function AdminExamsPage() {
                   placeholder="e.g. 60"
                 />
               </label>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Explanation (optional)</span>
                 <RichTextEditor
                   value={questionCreate.explanation}
                   onChange={(explanation) =>
                     setQuestionCreate((p) => ({ ...p, explanation }))
                   }
-                  placeholder="Add an optional explanation..."
-                  minHeight={120}
+                  placeholder="أضف شرحًا اختياريًا..."
+                  minHeight={140}
                 />
               </div>
               <div className="modal-actions">
@@ -1292,7 +1322,7 @@ export default function AdminExamsPage() {
       {/* Question edit */}
       {questionEdit ? (
         <div className="modal-backdrop" role="presentation">
-          <div className="modal" role="dialog" aria-modal="true">
+          <div className="modal modal-wide" role="dialog" aria-modal="true">
             <div className="modal-header">
               <div>
                 <p className="eyebrow">Edit question</p>
@@ -1313,15 +1343,16 @@ export default function AdminExamsPage() {
                 questionUpdateMutation.mutate()
               }}
             >
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Prompt</span>
                 <RichTextEditor
+                  ref={editPromptEditorRef}
                   value={questionEdit.prompt}
                   onChange={(prompt) =>
                     setQuestionEdit((p) => (p ? { ...p, prompt } : p))
                   }
-                  placeholder="Write the question prompt..."
-                  minHeight={140}
+                  placeholder="اكتب نص السؤال هنا..."
+                  minHeight={160}
                 />
               </div>
               <div className="card">
@@ -1329,8 +1360,9 @@ export default function AdminExamsPage() {
                 {questionEdit.options.map((opt, idx) => (
                   <label key={idx} className="field">
                     Option {idx + 1}
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div className="option-input-row">
                       <input
+                        className="input-rtl"
                         value={opt}
                         onChange={(event) =>
                           setQuestionEdit((p) => {
@@ -1414,15 +1446,15 @@ export default function AdminExamsPage() {
                   placeholder="e.g. 60"
                 />
               </label>
-              <div className="field">
+              <div className="field field--richtext">
                 <span>Explanation (optional)</span>
                 <RichTextEditor
                   value={questionEdit.explanation}
                   onChange={(explanation) =>
                     setQuestionEdit((p) => (p ? { ...p, explanation } : p))
                   }
-                  placeholder="Add an optional explanation..."
-                  minHeight={120}
+                  placeholder="أضف شرحًا اختياريًا..."
+                  minHeight={140}
                 />
               </div>
               <div className="modal-actions">

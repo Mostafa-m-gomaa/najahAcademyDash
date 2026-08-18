@@ -1,129 +1,150 @@
-import { useEffect, useRef, type MouseEvent } from 'react'
-import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
-import Placeholder from '@tiptap/extension-placeholder'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import { sanitizeRichText } from '../lib/richText'
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react'
+import ReactQuill from 'react-quill-new'
+import Delta from 'quill-delta'
+import 'react-quill-new/dist/quill.snow.css'
+import { isRichTextEmpty, prepareWordPasteHtml, sanitizeRichText } from '../lib/richText'
 import './RichTextEditor.css'
+
+export type RichTextEditorHandle = {
+  getHtmlForSave: () => string
+}
 
 type RichTextEditorProps = {
   value: string
   onChange: (html: string) => void
   placeholder?: string
   minHeight?: number
+  className?: string
 }
 
-const preventToolbarBlur = (event: MouseEvent<HTMLButtonElement>) => {
-  event.preventDefault()
+const modules = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    [{ direction: 'rtl' }, { align: [] }],
+    ['clean'],
+  ],
 }
 
-export default function RichTextEditor({
-  value,
-  onChange,
-  placeholder = 'Start typing...',
-  minHeight = 120,
-}: RichTextEditorProps) {
-  const isInternalUpdate = useRef(false)
+const formats = [
+  'bold',
+  'italic',
+  'underline',
+  'list',
+  'indent',
+  'direction',
+  'align',
+]
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: false,
-        bulletList: false,
-        orderedList: false,
-        blockquote: false,
-        codeBlock: false,
-        horizontalRule: false,
-      }),
-      Underline,
-      Placeholder.configure({
-        placeholder,
-      }),
-    ],
-    content: value || '',
-    onUpdate: ({ editor: nextEditor }) => {
-      isInternalUpdate.current = true
-      onChange(sanitizeRichText(nextEditor.getHTML()))
+const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
+  function RichTextEditor(
+    {
+      value,
+      onChange,
+      placeholder = 'Start typing...',
+      minHeight = 120,
+      className = '',
     },
-    editorProps: {
-      attributes: {
-        class: 'tiptap',
-      },
-    },
-  })
+    ref,
+  ) {
+    const quillRef = useRef<ReactQuill>(null)
 
-  useEffect(() => {
-    if (!editor) return
+    useImperativeHandle(ref, () => ({
+      getHtmlForSave: () =>
+        quillRef.current?.getEditor().root.innerHTML ?? value,
+    }))
 
-    if (isInternalUpdate.current) {
-      isInternalUpdate.current = false
-      return
+    const handleChange = (html: string) => {
+      const sanitized = sanitizeRichText(html)
+      const next = isRichTextEmpty(sanitized) ? '' : sanitized
+      const current = isRichTextEmpty(value) ? '' : value
+      if (next === current) return
+      onChange(next)
     }
 
-    const nextValue = sanitizeRichText(value || '')
-    const currentValue = sanitizeRichText(editor.getHTML())
+    useEffect(() => {
+      const quill = quillRef.current?.getEditor()
+      if (!quill) return
 
-    if (nextValue !== currentValue) {
-      editor.commands.setContent(nextValue || '', { emitUpdate: false })
-    }
-  }, [editor, value])
+      quill.root.setAttribute('dir', 'rtl')
 
-  const toolbarState = useEditorState({
-    editor,
-    selector: ({ editor: currentEditor }) => ({
-      isBold: currentEditor.isActive('bold'),
-      isItalic: currentEditor.isActive('italic'),
-      isUnderline: currentEditor.isActive('underline'),
-    }),
-  })
+      quill.clipboard.addMatcher('BR', () => new Delta().insert('\n'))
 
-  const { isBold, isItalic, isUnderline } = toolbarState ?? {
-    isBold: false,
-    isItalic: false,
-    isUnderline: false,
-  }
+      const applyRtlToRange = (start: number, length: number) => {
+        if (length <= 0) return
+        quill.formatText(start, length, { direction: 'rtl', align: 'right' }, 'silent')
+      }
 
-  if (!editor) {
+      const handlePaste = (event: ClipboardEvent) => {
+        const rawHtml = event.clipboardData?.getData('text/html') ?? ''
+        const plainText = event.clipboardData?.getData('text/plain') ?? ''
+        console.log('[quill-paste] raw text/html', rawHtml)
+        console.log('[quill-paste] hasBr', /<br\s*\/?>/i.test(rawHtml))
+
+        event.preventDefault()
+        event.stopPropagation()
+
+        const selection = quill.getSelection(true)
+        const index = selection?.index ?? quill.getLength()
+        const length = selection?.length ?? 0
+
+        if (!rawHtml.trim()) {
+          if (!plainText.trim()) return
+
+          quill.deleteText(index, length, 'silent')
+          quill.insertText(index, plainText, { direction: 'rtl' }, 'user')
+          applyRtlToRange(index, plainText.length)
+          quill.setSelection(index + plainText.length, 0, 'silent')
+          return
+        }
+
+        const normalized = sanitizeRichText(prepareWordPasteHtml(rawHtml))
+        const brCount = (normalized.match(/<br\s*\/?>/gi) ?? []).length
+        const pCount = (normalized.match(/<p[\s>]/gi) ?? []).length
+        console.log('[quill-paste] normalized', {
+          brCount,
+          pCount,
+          preview: normalized.slice(0, 500),
+        })
+
+        const pasted = quill.clipboard.convert({ html: normalized })
+        const update = new Delta().retain(index).delete(length).concat(pasted)
+        quill.updateContents(update, 'user')
+        applyRtlToRange(index, pasted.length())
+        quill.setSelection(index + pasted.length(), 0, 'silent')
+      }
+
+      quill.root.addEventListener('paste', handlePaste, true)
+      return () => {
+        quill.root.removeEventListener('paste', handlePaste, true)
+      }
+    }, [])
+
     return (
-      <div className="rich-text-editor">
-        <div className="rich-text-editor__content" style={{ minHeight }}>
-          <p className="muted">Loading editor...</p>
-        </div>
+      <div
+        className={`rich-text-editor ${className}`.trim()}
+        dir="rtl"
+        style={{ ['--rte-min-height' as string]: `${minHeight}px` }}
+      >
+        <ReactQuill
+          ref={quillRef}
+          theme="snow"
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          modules={modules}
+          formats={formats}
+          preserveWhitespace
+        />
       </div>
     )
-  }
+  },
+)
 
-  return (
-    <div className="rich-text-editor">
-      <div className="rich-text-editor__toolbar">
-        <button
-          className={`rich-text-editor__button${isBold ? ' is-active' : ''}`}
-          type="button"
-          onMouseDown={preventToolbarBlur}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          Bold
-        </button>
-        <button
-          className={`rich-text-editor__button${isItalic ? ' is-active' : ''}`}
-          type="button"
-          onMouseDown={preventToolbarBlur}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          Italic
-        </button>
-        <button
-          className={`rich-text-editor__button${isUnderline ? ' is-active' : ''}`}
-          type="button"
-          onMouseDown={preventToolbarBlur}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          Underline
-        </button>
-      </div>
-      <div className="rich-text-editor__content" style={{ minHeight }}>
-        <EditorContent editor={editor} />
-      </div>
-    </div>
-  )
-}
+export default RichTextEditor
